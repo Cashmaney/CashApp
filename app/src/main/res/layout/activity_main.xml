@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <include layout="@layout/content_main"
+        android:id="@+id/include" />
+
+    <ImageView
+        android:id="@+id/PicImView"
+        android:layout_width="400dp"
+        android:layout_height="462dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:contentDescription="@string/PhotoDesc" />
+
+    <Button
+        android:id="@+id/CameraStartBtn"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="101dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:text="@string/Camera"
+        android:visibility="visible"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="bottom|left"
+        tools:ignore="RtlHardcoded" />
+
+    <Button
+        android:id="@+id/Logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:text="@string/logout"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="bottom|right"
+        tools:ignore="RtlHardcoded" />
+
+</android.support.design.widget.CoordinatorLayout>

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "754062895050",
+    "project_id": "firebase-documentdb"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754062895050:android:a2d6076d5d7372f3",
+        "android_client_info": {
+          "package_name": "com.cash.DocumentDB"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "754062895050-o3614qq6a99ff96mope2ur41nk6il1dr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cash.DocumentDB",
+            "certificate_hash": "017179aa40b3affb1bbc58002376346657d12019"
+          }
+        },
+        {
+          "client_id": "754062895050-aivtptb5vttbqjtcl9vblta489oificg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1paLrcvfdUzHhJY_K67SRAOmeZsJAYeA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
