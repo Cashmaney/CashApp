@@ -46,33 +46,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.tasks.RuntimeExecutionException;
-import com.google.android.gms.tasks.Task;
 
-import org.json.JSONException;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
 
 
 /**
@@ -86,7 +66,7 @@ public class LoginActivity extends AppCompatActivity implements
     private BackendConnector backend;
     private static final int RC_SIGN_IN = 9001;
     private static final String TAG = "SignInActivity";
-    public static final String EXTRA_MESSAGE = "com.cash.DocumentDB.username";
+
     //Id to identity READ_CONTACTS permission request.
     private static final int REQUEST_READ_CONTACTS = 0;
     /**
@@ -181,7 +161,7 @@ public class LoginActivity extends AppCompatActivity implements
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult taskSignIn = new handleSignInResult();
+            handleSignInResult taskSignIn = new handleSignInResult(this);
             taskSignIn.execute(result);
         }
     }
@@ -241,10 +221,10 @@ public class LoginActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
-        backend = (BackendConnector) new BackendConnector(getResources());
+        backend = new BackendConnector(getResources());
         findViewById(R.id.google_sign_in_button).setOnClickListener(this);
 
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mEmailView = findViewById(R.id.email);
         populateAutoComplete();
 
         // Configure sign-in to request the user's ID, email address, and basic
@@ -261,7 +241,7 @@ public class LoginActivity extends AppCompatActivity implements
                 .build();
 
 
-        mPasswordView = (EditText) findViewById(R.id.password);
+        mPasswordView = findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -273,7 +253,7 @@ public class LoginActivity extends AppCompatActivity implements
             }
         });
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -428,7 +408,7 @@ public class LoginActivity extends AppCompatActivity implements
         };
 
         int ADDRESS = 0;
-        int IS_PRIMARY = 1;
+        //int IS_PRIMARY = 1;
     }
 
     private void OpenMainActivity() {
@@ -444,7 +424,7 @@ public class LoginActivity extends AppCompatActivity implements
     }
 
 
-    private class handleSignInResult extends AsyncTask<GoogleSignInResult, Void, Boolean> {
+    private static class handleSignInResult extends AsyncTask<GoogleSignInResult, Void, Boolean> {
         //private void handleSignInResult(@NonNull Task<GoogleSignInAccount> completedTask) {
         //Log.d(TAG, "handleSignInResult:" + completedTask.getResult().isSuccess());
 
@@ -454,6 +434,12 @@ public class LoginActivity extends AppCompatActivity implements
         String accountName = "null";
         boolean rerunlogin = false;
 
+        private WeakReference<LoginActivity> activityReference;
+
+        handleSignInResult(LoginActivity context) {
+            activityReference = new WeakReference<>(context);
+        }
+
         @Override
         protected Boolean doInBackground(GoogleSignInResult... result) {
             OAuthToken token;
@@ -461,9 +447,10 @@ public class LoginActivity extends AppCompatActivity implements
                 case AC_GOOGLE_OAUTH2:
                     String accessToken = tryLoginToGoogle(result[0].getSignInAccount());
                     if (!accessToken.equals("")) {
-                        token = backend.tryLoginToBackend(accessToken);
+                        token = activityReference.get().backend.tryLoginToBackend(accessToken);
                         if (token != null) {  //todo: simplify if no more processing needed
-                            mUserProfile = backend.getUserProfile(token);
+                            activityReference.get().mUserProfile =
+                                    activityReference.get().backend.getUserProfile(token);
                             return true;
                         } else {
                             return false;
@@ -483,25 +470,26 @@ public class LoginActivity extends AppCompatActivity implements
         }
         @Override
         protected void onPostExecute(final Boolean success) {
-            showProgress(false);
+            activityReference.get().showProgress(false);
 
             if (success) {
-                OpenMainActivity();
+                activityReference.get().OpenMainActivity();
             } else {
                 if (!accountName.equals("null")) {
-                    Toast.makeText(getApplicationContext(),
-                            getString(R.string.login_failed), Toast.LENGTH_SHORT).show();
-                    mGoogleApiClient.connect();
-                    if(mGoogleApiClient.isConnected()) {
-                        Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient).setResultCallback(
-                                new ResultCallback<com.google.android.gms.common.api.Status>() {
+                    Toast.makeText(activityReference.get().getApplicationContext(),
+                            activityReference.get().getString(R.string.login_failed),
+                            Toast.LENGTH_SHORT).show();
+                    activityReference.get().mGoogleApiClient.connect();
+                    if(activityReference.get().mGoogleApiClient.isConnected()) {
+                        Auth.GoogleSignInApi.revokeAccess(activityReference.get().mGoogleApiClient)
+                                .setResultCallback(new ResultCallback<com.google.android.gms.common.api.Status>() {
                                     @Override
                                     public void onResult(@NonNull com.google.android.gms.common.api.Status status) {
                                         Log.d(TAG, "Revoke access using Google Api.");
                                         //signOutIfConnected(); //REMOVED
                                     }
                                 });
-                        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback
+                        Auth.GoogleSignInApi.signOut(activityReference.get().mGoogleApiClient).setResultCallback
                                 (new ResultCallback<com.google.android.gms.common.api.Status>() {
                                     @Override
                                     public void onResult(@NonNull com.google.android.gms.common.api.Status status) {
@@ -513,12 +501,12 @@ public class LoginActivity extends AppCompatActivity implements
         }
         @Override
         protected void onCancelled() {
-            showProgress(false);
+            activityReference.get().showProgress(false);
         }
 
         @Override
         protected void onPreExecute() {
-            showProgress(true);
+            activityReference.get().showProgress(true);
         }
 
         /*!
@@ -530,12 +518,11 @@ public class LoginActivity extends AppCompatActivity implements
                 return accessToken;
             }
             accountName = account.getDisplayName();
-            Bundle mBundle = new Bundle();
 
             try {
-                accessToken = GetGoogleAccessToken(account);
+                accessToken = activityReference.get().GetGoogleAccessToken(account);
             } catch (UserRecoverableAuthException e) {
-                startActivityForResult(e.getIntent(), AUTH_CODE_REQUEST_CODE);
+                activityReference.get().startActivityForResult(e.getIntent(), AUTH_CODE_REQUEST_CODE);
                 rerunlogin = true;
             } catch (GoogleAuthException e) {
                 Log.i(TAG, "GoogleAuthException on login -- login failed");
@@ -554,7 +541,7 @@ public class LoginActivity extends AppCompatActivity implements
                      */
             if (rerunlogin) {
                 try {
-                    accessToken = GetGoogleAccessToken(account);
+                    accessToken = activityReference.get().GetGoogleAccessToken(account);
                 } catch (UserRecoverableAuthException e) {
                     Log.e(TAG, "UserRecoverableAuthException on login -- login failed");
                     return "";
@@ -637,7 +624,7 @@ public class LoginActivity extends AppCompatActivity implements
      * the user to the backend.
      */
     private String GetGoogleAccessToken(GoogleSignInAccount account) throws
-    NullPointerException, IOException, UserRecoverableAuthException, GoogleAuthException {
+    NullPointerException, IOException, GoogleAuthException {
 
         final Account mAccount = account.getAccount();
         Bundle mBundle = new Bundle();

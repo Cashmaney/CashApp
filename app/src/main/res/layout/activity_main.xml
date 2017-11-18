@@ -39,4 +39,14 @@
         app:layout_anchorGravity="bottom|right"
         tools:ignore="RtlHardcoded" />
 
+    <Button
+        android:id="@+id/upload_btn"
+        style="@android:style/Widget.Material.Button"
+        android:layout_width="136dp"
+        android:layout_height="wrap_content"
+        android:text="Upload"
+        android:visibility="invisible"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="bottom|center" />
+
 </android.support.design.widget.CoordinatorLayout>

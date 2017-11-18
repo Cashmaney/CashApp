@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -28,6 +29,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 
@@ -50,6 +52,15 @@ public class MainActivity extends AppCompatActivity implements
 
     private ImageView mImageView;
     private Bitmap mImageBitmap = null;
+    private Button mUploadBtn = null;
+    Button.OnClickListener mTakePicOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakePictureIntent(ACTION_TAKE_PHOTO_S);
+                }
+            };
+
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -161,10 +172,72 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
+        mUploadBtn = findViewById(R.id.upload_btn);
+        mUploadBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new UploadPhotoTask((MainActivity)getParent()).execute();
+            }
+        });
+
         // Example of a call to a native method
         TextView tv = findViewById(R.id.sample_text);
         tv.setText(stringFromJNI(mUserProfile.getUsername()));
     }
+
+    private static class UploadPhotoTask extends AsyncTask<Void, Void, Boolean> {
+        //private void handleSignInResult(@NonNull Task<GoogleSignInAccount> completedTask) {
+        //Log.d(TAG, "handleSignInResult:" + completedTask.getResult().isSuccess());
+
+        // handleSignInResult(GoogleSignInResult result)
+        private WeakReference<MainActivity> activityReference;
+
+        UploadPhotoTask(MainActivity context) {
+            activityReference = new WeakReference<>(context);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... image) {
+            return uploadPhoto();
+        }
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            //showProgress(false);
+
+            if (success) {
+                //
+            } else {
+                //
+            }
+        }
+        @Override
+        protected void onCancelled() {
+            //showProgress(false);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            //showProgress(true);
+        }
+
+        /**
+         *  Actual synchronous upload task
+         */
+        private boolean uploadPhoto() {
+            BackendConnector backend = new BackendConnector(activityReference.get().getResources());
+
+            if (backend.uploadImage(activityReference.get().mUserProfile,
+                    "pic1.jpg", activityReference.get().mImageBitmap)) {
+                Log.d(TAG, "Upload success");
+                return true;
+            } else {
+                Log.d(TAG, "Upload failed");
+                return false;
+            }
+        }
+
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -195,6 +268,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mImageView.setImageBitmap(mImageBitmap);
         mImageView.setVisibility(View.VISIBLE);
+        mUploadBtn.setVisibility(View.VISIBLE);
     }
 
     /*@SuppressWarnings("StatementWithEmptyBody")
@@ -206,13 +280,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }*/
 
-    Button.OnClickListener mTakePicOnClickListener =
-            new Button.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dispatchTakePictureIntent(ACTION_TAKE_PHOTO_S);
-                }
-            };
+
 
     private void dispatchTakePictureIntent(int actionCode) {
 

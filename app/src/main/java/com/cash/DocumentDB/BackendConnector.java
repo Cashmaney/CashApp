@@ -108,7 +108,7 @@ public class BackendConnector {
     public boolean uploadImage(UserProfile currentUser, String imagename, Bitmap imageBitmap) {
 
         byte[] data = null;
-        final String targetUrl = backend_url + upload_image;
+        final String targetUrl = backend_url + upload_image + imagename;
         if(imageBitmap!=null){
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
@@ -127,7 +127,7 @@ public class BackendConnector {
             HttpReturnParams retVals =
                     httpConn.sendMultipartMessage(targetUrl, null,
                             false, headers, data, imagename);
-            return (retVals.mRetCode == HttpConnectionHandler.HTTP_OK);
+            return (retVals.mRetCode == HttpConnectionHandler.HTTP_CREATED);
         } catch (RuntimeException e) {
             Log.i(TAG, "Error communicating with backend" + e.getMessage());
             return false;
